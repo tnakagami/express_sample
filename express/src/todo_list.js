@@ -9,16 +9,16 @@ const orm = new ORMapper(database.models.ToDoList);
 
 // define GET method
 router.get('/:id', (req, res) => {
-    const _id = req.params.id;
+    const id = req.params.id;
 
     sequelize.transaction(async (transaction) => {
         let ret;
 
         try {
-            const _todo_list = await orm.get(_id);
+            const todo_list = await orm.get(id);
 
-            if (_todo_list !== null) {
-                ret = Promise.resolve(res.status(200).json(_todo_list));
+            if (todo_list !== null) {
+                ret = Promise.resolve(res.status(200).json(todo_list));
             }
             else {
                 ret = Promise.resolve(res.sendStatus(404));
@@ -36,8 +36,8 @@ router.get('/', (req, res) => {
         let ret;
 
         try {
-            const _todo_lists = await orm.find({order: [['id', 'ASC']]});
-            ret = Promise.resolve(res.status(200).json(_todo_lists));
+            const todo_lists = await orm.find({order: [['id', 'ASC']]});
+            ret = Promise.resolve(res.status(200).json(todo_lists));
         }
         catch (err) {
             ret = Promise.reject(res.status(500).json({'error': err.message}));
@@ -48,14 +48,14 @@ router.get('/', (req, res) => {
 });
 // defile POST method
 router.post('/', (req, res) => {
-    const _data = req.body;
+    const data = req.body;
 
     sequelize.transaction(async (transaction) => {
         let ret;
 
         try {
-            const _todo_list = await orm.create(_data);
-            ret = Promise.resolve(res.status(201).json(_todo_list));
+            const todo_list = await orm.create(data);
+            ret = Promise.resolve(res.status(201).json(todo_list));
         }
         catch (err) {
             ret = Promise.reject(res.status(500).json({'error': err.message}));
@@ -66,17 +66,17 @@ router.post('/', (req, res) => {
 });
 // defile PUT method
 router.post('/:id', (req, res) => {
-    const _id = req.params.id;
-    const _data = req.body;
+    const id = req.params.id;
+    const data = req.body;
 
     sequelize.transaction(async (transaction) => {
         let ret;
 
         try {
-            const _todo_list = await orm.update(_id, _data, {where: {id: _id}});
+            const todo_list = await orm.update(id, data, {where: {id: id}});
 
-            if (_todo_list !== undefined) {
-                ret = Promise.resolve(res.status(201).json(_todo_list));
+            if (todo_list !== undefined) {
+                ret = Promise.resolve(res.status(201).json(todo_list));
             }
             else {
                 ret = Promise.resolve(res.sendStatus(400));
@@ -91,13 +91,13 @@ router.post('/:id', (req, res) => {
 });
 // defile DELETE method
 router.delete('/:id', (req, res) => {
-    const _id = req.params.id;
+    const id = req.params.id;
 
     sequelize.transaction(async (transaction) => {
         let ret;
 
         try {
-            await orm.delete(_id);
+            await orm.delete(id);
             ret = Promise.resolve(res.sendStatus(204));
         }
         catch (err) {
