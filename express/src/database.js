@@ -2,8 +2,6 @@ const logger = require('./logger');
 const {Sequelize, DataTypes} = require('sequelize');
 const env = process.env;
 
-let is_initalized = false;
-
 // connect to database
 const sequelize  = new Sequelize(env.MYSQL_DATABASE, env.MYSQL_USER, env.MYSQL_PASSWORD, {
     host: 'database', // set service name in docker-compose.yml
@@ -63,42 +61,60 @@ class ORMapper {
     }
 
     async find(options) {
-        return await this.Model.findAll(options);
+        try {
+            return await this.Model.findAll(options);
+        }
+        catch (err) {
+            throw err;
+        }
     }
     async get(id) {
-        return await this.Model.findByPk(id);
+        try {
+            return await this.Model.findByPk(id);
+        }
+        catch (err) {
+            throw err;
+        }
     }
     async update(pk, data, options) {
-        let ret = undefined;
-        const _target = await this.get(pk);
+        try {
+            const _target = await this.get(pk);
+            let ret = undefined;
 
-        if (_target !== null) {
-            ret = await this.Model.update(data, options);
+            if (_target !== null) {
+                ret = await this.Model.update(data, options);
+            }
+
+            return ret;
         }
-
-        return ret;
+        catch (err) {
+            throw err;
+        }
     }
     async create(data) {
-        return await this.Model.create(data);
+        try {
+            return await this.Model.create(data);
+        }
+        catch (err) {
+            throw err;
+        }
     }
     async delete(id) {
-        const _data = await this.get(id);
-        let ret = undefined;
+        try {
+            const _data = await this.get(id);
+            let ret = undefined;
 
-        if (_data !== null) {
-            ret = await Model.destroy(_data);
+            if (_data !== null) {
+                ret = await Model.destroy(_data);
+            }
+
+            return ret;
         }
-
-        return ret;
+        catch (err) {
+            throw err;
+        }
     }
 }
-
-(async () => {
-    if (!is_initalized) {
-        await sequelize.sync();
-        is_initalized = true;
-    }
-})();
 
 module.exports = {
     sequelize: sequelize,
