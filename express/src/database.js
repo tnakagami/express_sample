@@ -1,4 +1,3 @@
-const logger = require('./logger');
 const {Sequelize, DataTypes} = require('sequelize');
 const env = process.env;
 
@@ -78,14 +77,14 @@ class ORMapper {
     }
     async update(pk, data, options) {
         try {
-            const _target = await this.get(pk);
-            let ret = undefined;
+            const target = await this.get(pk);
+            let result = undefined;
 
-            if (_target !== null) {
-                ret = await this.Model.update(data, options);
+            if (target !== null) {
+                result = await this.Model.update(data, options);
             }
 
-            return ret;
+            return result;
         }
         catch (err) {
             throw err;
@@ -101,14 +100,14 @@ class ORMapper {
     }
     async delete(id) {
         try {
-            const _data = await this.get(id);
-            let ret = undefined;
+            const data = await this.get(id);
+            let result = undefined;
 
-            if (_data !== null) {
-                ret = await Model.destroy(_data);
+            if (data !== null) {
+                result = await Model.destroy(_data);
             }
 
-            return ret;
+            return result;
         }
         catch (err) {
             throw err;
