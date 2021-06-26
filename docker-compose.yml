@@ -1,0 +1,53 @@
+version: '3.4'
+
+x-logging:
+    &json-logging
+    driver: json-file
+    options:
+        max-size: "10m"
+        max-file: "3"
+
+services:
+    database:
+        build:
+            context: ./database
+            dockerfile: Dockerfile
+        image: database.server
+        container_name: database-server
+        restart: always
+        env_file:
+            - ./db.env
+        environment:
+            TZ: "Asia/Tokyo"
+            MYSQL_ROOT_PASSWORD: "rootpassword"
+        volumes:
+            - database:/var/lib/mysql
+        logging: *json-logging
+        expose:
+            - 3306
+
+    express:
+        build:
+            context: ./express
+            dockerfile: Dockerfile
+        image: express.server
+        working_dir: /home/node/app
+        restart: always
+        container_name: express-server
+        env_file:
+            - ./db.env
+        environment:
+            - TZ=+09:00
+            - NODE_UID=1000
+            - NODE_GID=1000
+            - SERVER_PORT=11500
+        ports:
+            - 11500:11500
+        volumes:
+            - ./express/src/:/home/node/app/src
+        depends_on:
+            - database
+        logging: *json-logging
+
+volumes:
+    database:

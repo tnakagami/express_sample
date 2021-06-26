@@ -1,2 +1,2 @@
-# express_sample
-Express(Node.js) Sample
+# express sample
+Express(Node.js)を用いたREST APIのサンプル
