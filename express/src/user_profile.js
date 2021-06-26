@@ -7,104 +7,133 @@ const router = express.Router();
 
 const orm = new ORMapper(database.models.UserProfile);
 
+const logging = (method, route_type, msg) => {
+    logger[method](`${route_type}(UserProfile) ${msg}`);
+};
+
 // define GET method
 router.get('/:id', (req, res) => {
+    const route_type = 'GET';
     const id = req.params.id;
 
     sequelize.transaction(async (transaction) => {
-        let ret;
+        let result;
 
         try {
-            const user_profile = await orm.get(id);
+            const target = await orm.get(id);
 
-            if (user_profile !== null) {
-                ret = Promise.resolve(res.status(200).json(user_profile));
+            if (target !== null) {
+                logging('info', route_type, JSON.stringify(target.toJSON()));
+                result = Promise.resolve(res.status(200).json(target));
             }
             else {
-                ret = Promise.resolve(res.sendStatus(404));
+                logging('info', route_type, 'Not Found');
+                result = Promise.resolve(res.sendStatus(404));
             }
         }
         catch (err) {
-            ret = Promise.reject(res.status(500).json({'error': err.message}));
+            const msg = err.message;
+            logging('error', route_type, msg);
+            result = Promise.reject(res.status(500).json({'error': msg}));
         }
 
-        return ret;
+        return result;
     });
 });
 router.get('/', (req, res) => {
+    const route_type = 'FIND';
+
     sequelize.transaction(async (transaction) => {
-        let ret;
+        let result;
 
         try {
-            const user_profiles = await orm.find({order: [['id', 'ASC']]});
-            ret = Promise.resolve(res.status(200).json(user_profiles));
+            const targets = await orm.find({order: [['id', 'ASC']]});
+            for (const target of targets) {
+                logging('info', route_type, JSON.stringify(target.toJSON()));
+            }
+            result = Promise.resolve(res.status(200).json(targets));
         }
         catch (err) {
-            ret = Promise.reject(res.status(500).json({'error': err.message}));
+            const msg = err.message;
+            logging('error', route_type, msg);
+            result = Promise.reject(res.status(500).json({'error': msg}));
         }
 
-        return ret;
+        return result;
     });
 });
-// defile POST method
+// define POST method
 router.post('/', (req, res) => {
+    const route_type = 'POST';
     const data = req.body;
 
     sequelize.transaction(async (transaction) => {
-        let ret;
+        let result;
 
         try {
-            const user_profile = await orm.create(data);
-            ret = Promise.resolve(res.status(201).json(user_profile));
+            const target = await orm.create(data);
+            logging('info', route_type, JSON.stringify(target.toJSON()));
+            result = Promise.resolve(res.status(201).json(target));
         }
         catch (err) {
-            ret = Promise.reject(res.status(500).json({'error': err.message}));
+            const msg = err.message;
+            logging('error', route_type, msg);
+            result = Promise.reject(res.status(500).json({'error': msg}));
         }
 
-        return ret;
+        return result;
     });
 });
-// defile PUT method
+// define PUT method
 router.post('/:id', (req, res) => {
+    const route_type = 'PUT';
     const id = req.params.id;
     const data = req.body;
 
     sequelize.transaction(async (transaction) => {
-        let ret;
+        let result;
 
         try {
-            const user_profile = await orm.update(id, data, {where: {id: id}});
+            const target = await orm.update(id, data, {where: {id: id}});
 
-            if (user_profile !== undefined) {
-                ret = Promise.resolve(res.status(201).json(user_profile));
+            if (target !== undefined) {
+                logging('info', route_type, JSON.stringify(target.toJSON()));
+                result = Promise.resolve(res.status(201).json(target));
             }
             else {
-                ret = Promise.resolve(res.sendStatus(400));
+                logging('info', route_type, 'Not Found');
+                result = Promise.resolve(res.sendStatus(400));
             }
         }
         catch (err) {
-            ret = Promise.reject(res.status(500).json({'error': err.message}));
+            const msg = err.message;
+            logging('error', route_type, msg);
+            result = Promise.reject(res.status(500).json({'error': msg}));
         }
 
-        return ret;
+        return result;
     });
 });
-// defile DELETE method
+// define DELETE method
 router.delete('/:id', (req, res) => {
+    const route_type = 'DELETE';
     const id = req.params.id;
 
     sequelize.transaction(async (transaction) => {
-        let ret;
+        let result;
 
         try {
             await orm.delete(id);
-            ret = Promise.resolve(res.sendStatus(204));
+            logging('info', route_type, 'No Content');
+            result = Promise.resolve(res.sendStatus(204));
         }
         catch (err) {
-            ret = Promise.reject(res.status(500).json({'error': err.message}));
+            const msg = err.message;
+            logging('error', route_type, msg);
+            result = Promise.reject(res.status(500).json({'error': msg}));
         }
 
-        return ret;
+        return result;
     });
 });
 
