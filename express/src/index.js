@@ -8,11 +8,13 @@ const app = express();
 app.use(express.json());
 
 // define User Profile
-const user_profile = require('./user_profile');
-app.use('/user-profile', user_profile);
+const UserProfile = require('./user_profile');
+const user_profile = new UserProfile(database.models.UserProfile);
+app.use('/user-profile', user_profile.router);
 // define ToDo List
-const todo_list = require('./todo_list');
-app.use('/todo-list', todo_list);
+const ToDoList = require('./todo_list');
+const todo_list = new ToDoList(database.models.ToDoList);
+app.use('/todo-list', todo_list.router);
 
 // start express server
 database.sequelize.sync().then(() => {
