@@ -2,7 +2,7 @@ const express = require('express');
 const logger = require('./logger');
 const database = require('./database');
 
-class RestAPIServer {
+class RestApiServer {
     constructor() {
         this.app = express();
         this.app.use(express.json());
@@ -15,10 +15,10 @@ class RestAPIServer {
         this.app.use('/users', users_router);
         new Users(users_router, database.models.User);
         // setup ToDo List
-        const ToDoList = require('./todo_list');
-        const todo_list_router = express.Router();
-        this.app.use('/todo-list', todo_list_router);
-        new ToDoList(todo_list_router, database.models.ToDoList);
+        const ToDoLists = require('./todo_lists');
+        const todo_lists_router = express.Router();
+        this.app.use('/todo-lists', todo_lists_router);
+        new ToDoLists(todo_lists_router, database.models.ToDoList);
     }
     run_forever() {
         const port = process.env.SERVER_PORT || 11500;
@@ -30,5 +30,5 @@ class RestAPIServer {
     }
 }
 
-const server = new RestAPIServer();
+const server = new RestApiServer();
 server.run_forever();

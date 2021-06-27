@@ -3,7 +3,7 @@
 readonly content_type="Content-Type: application/json"
 readonly base_url="http://localhost:11500"
 readonly users_url="${base_url}/users"
-readonly todo_list_url="${base_url}/todo-list"
+readonly todo_list_url="${base_url}/todo-lists"
 delete_flag=0
 
 # check arguments
@@ -19,6 +19,18 @@ while [ -n "$1" ]; do
     esac
 done
 
+function execute_curl_cmd() {
+    local _url="$1"
+    local _method="$2"
+    local _data="$3"
+
+    if [ -z "${_data}" ]; then
+        echo $(curl ${_url} -X ${_method} -H "${content_type}" -s)
+    else
+        echo $(curl ${_url} -X ${_method} -H "${content_type}" -d "${_data}" -s)
+    fi
+}
+
 function add_users() {
     echo === add users ===
     {
@@ -28,7 +40,7 @@ function add_users() {
         echo bob 2000/1/3
     } | while read username birthday; do
         data='{"username":"'${username}'","birthday": "'${birthday}'"}'
-        echo $(curl ${users_url} -X POST -H "${content_type}" -d "${data}" -s)
+        execute_curl_cmd ${users_url} POST "${data}"
     done
     echo =================
 }
@@ -39,7 +51,7 @@ function update_users() {
         echo 3 2002/1/3
     } | while read user_id birthday; do
         data='{"birthday": "'${birthday}'"}'
-        echo $(curl ${users_url}/${user_id} -X PUT -H "${content_type}" -d "${data}" -s)
+        execute_curl_cmd ${users_url}/${user_id} PUT "${data}"
     done
     echo ====================
 }
@@ -48,12 +60,12 @@ function add_todo() {
     echo === add todo lists ===
     {
         # title content
-        echo finish homework@list: math, science, English
-        echo clean my room@at 10:00-11:00am
-        echo shopping@at 4:00-5:00pm
-    } | while IFS=@ read title content; do
-        data='{"title":"'${title}'","content": "'${content}'"}'
-        echo $(curl ${todo_list_url} -X POST -H "${content_type}" -d "${data}" -s)
+        echo finish homework@list: math, science, English@2222/2/2
+        echo clean my room@at 10:00-11:00am@2222/2/2
+        echo shopping@at 4:00-5:00pm@2222/2/2
+    } | while IFS=@ read title content limit; do
+        data='{"title":"'${title}'","content": "'${content}'","limit": "'${limit}'"}'
+        execute_curl_cmd ${todo_list_url} POST "${data}"
     done
     echo ======================
 }
@@ -65,7 +77,7 @@ function update_todo() {
         echo 3@at 7:00-8:00pm
     } | while IFS=@ read item_id content; do
         data='{"content": "'${content}'"}'
-        echo $(curl ${todo_list_url}/${item_id} -X PUT -H "${content_type}" -d "${data}" -s)
+        execute_curl_cmd ${todo_list_url}/${item_id} PUT "${data}"
     done
     echo =========================
 }
@@ -75,11 +87,11 @@ function update_todo() {
 # ====================
 # get all users
 echo === get all users ===
-echo $(curl ${users_url} -X GET -H "${content_type}" -s)
+execute_curl_cmd ${users_url} GET ""
 echo =====================
 # get all todo lists
 echo === get all todo lists ===
-echo $(curl ${todo_list_url} -X GET -H "${content_type}" -s)
+execute_curl_cmd ${todo_list_url} GET ""
 echo ==========================
 
 # add data
@@ -88,14 +100,14 @@ add_todo
 
 # get all users
 echo === get all users ===
-echo $(curl ${users_url} -X GET -H "${content_type}" -s)
+execute_curl_cmd ${users_url} GET ""
 echo =====================
 echo === get filtered users ===
-echo $(curl "${users_url}?username=alice" -X GET -H "${content_type}" -s)
+execute_curl_cmd "${users_url}?username=alice" GET ""
 echo ==========================
 # get all todo lists
 echo === get all todo lists ===
-echo $(curl ${todo_list_url} -X GET -H "${content_type}" -s)
+execute_curl_cmd ${todo_list_url} GET ""
 echo ==========================
 
 # update data
@@ -104,11 +116,11 @@ update_todo
 
 # get all users
 echo === get all users ===
-echo $(curl ${users_url} -X GET -H "${content_type}" -s)
+execute_curl_cmd ${users_url} GET ""
 echo =====================
 # get all todo lists
 echo === get all todo lists ===
-echo $(curl ${todo_list_url} -X GET -H "${content_type}" -s)
+execute_curl_cmd ${todo_list_url} GET ""
 echo ==========================
 
 # delete all data
@@ -117,7 +129,7 @@ function delete_all_data() {
 
     echo === delete all data "(${_url})" ===
     curl ${_url} -X GET -H "${content_type}" -s | grep -oP '(?<="id":)\d+(?=,)' | while read target_id; do
-        curl ${_url}/${target_id} -X DELETE -H "${content_type}" -D - -s
+        curl ${_url}/${target_id} -X DELETE -H "${content_type}" -D -
     done
     echo =======================
 }

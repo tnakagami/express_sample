@@ -68,6 +68,7 @@ class ORMapper {
 class BaseRouter {
     constructor(router, Model, name) {
         this.name = name || 'BaseRouter';
+        this.find_option = {order: [['id', 'ASC']]};
         this.orm = new ORMapper(Model);
         this.init(router);
     }
@@ -99,11 +100,13 @@ class BaseRouter {
     convert2json(data) {
         const indent = '    ';
 
-        return JSON.stringify(data.toJSON(), this.formatter, indent);
+        return JSON.stringify(data, this.formatter, indent);
     }
     handle_routers(router) {
         router.use((req, res, next) => {
-            res.set('Content-Type', 'application/json; charset=utf-8');
+            const indent = '    ';
+            res.app.set('json replacer', this.formatter);
+            res.app.set('json spaces', indent);
             next();
         });
         router.get('/:id', this.callback_get);
@@ -124,9 +127,8 @@ class BaseRouter {
                 const target = await this.orm.get(id);
 
                 if (target !== null) {
-                    const json_data = this.convert2json(target);
-                    this.logging('info', route_type, json_data);
-                    result = Promise.resolve(res.status(200).send(json_data));
+                    this.logging('info', route_type, this.convert2json(target.toJSON()));
+                    result = Promise.resolve(res.status(200).json(target.toJSON()));
                 }
                 else {
                     this.logging('info', route_type, 'Not Found');
@@ -150,15 +152,10 @@ class BaseRouter {
             let result;
 
             try {
-                const targets = await this.orm.find({order: [['id', 'ASC']], where: query});
-                const jsons = [];
-                for (const target of targets) {
-                    const each_data = this.convert2json(target);
-                    jsons.push(each_data);
-                    this.logging('info', route_type, each_data);
-                }
-                const json_data = '[' + jsons.join(',') + ']';
-                result = Promise.resolve(res.status(200).send(json_data));
+                const options = Object.assign({where: query}, this.find_option);
+                const targets = await this.orm.find(options);
+                this.logging('info', route_type, this.convert2json(targets));
+                result = Promise.resolve(res.status(200).json(targets));
             }
             catch (err) {
                 const msg = err.message;
@@ -179,9 +176,8 @@ class BaseRouter {
 
             try {
                 const target = await this.orm.create(data);
-                const json_data = this.convert2json(target);
-                this.logging('info', route_type, json_data);
-                result = Promise.resolve(res.status(201).send(json_data));
+                this.logging('info', route_type, this.convert2json(target.toJSON()));
+                result = Promise.resolve(res.status(201).json(target.toJSON()));
             }
             catch (err) {
                 const msg = err.message;
@@ -205,9 +201,8 @@ class BaseRouter {
                 const target = await this.orm.update(id, data, {where: {id: id}});
 
                 if (target !== undefined) {
-                    const json_data = this.convert2json(target);
-                    this.logging('info', route_type, json_data);
-                    result = Promise.resolve(res.status(201).send(json_data));
+                    this.logging('info', route_type, this.convert2json(target.toJSON()));
+                    result = Promise.resolve(res.status(201).json(target.toJSON()));
                 }
                 else {
                     this.logging('info', route_type, 'Not Found');

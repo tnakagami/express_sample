@@ -48,7 +48,10 @@ const models = {
             content: {
                 type: DataTypes.TEXT,
             },
-
+            limit: {
+                type: DataTypes.DATE,
+                defaultValue: DataTypes.NOW,
+            },
         }, {
             timestamps: true,
             freezeTableName: true, // fixed table name
