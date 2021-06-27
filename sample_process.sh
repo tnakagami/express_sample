@@ -128,7 +128,7 @@ function delete_all_data() {
     local _url="$1"
 
     echo === delete all data "(${_url})" ===
-    curl ${_url} -X GET -H "${content_type}" -s | grep -oP '(?<="id":)\d+(?=,)' | while read target_id; do
+    curl ${_url} -X GET -H "${content_type}" -s | grep -oP '(?<="id":\s)\d+(?=,)' | while read target_id; do
         curl ${_url}/${target_id} -X DELETE -H "${content_type}" -D -
     done
     echo =======================
@@ -138,3 +138,12 @@ if [ ${delete_flag} -eq 1 ]; then
     delete_all_data ${users_url}
     delete_all_data ${todo_list_url}
 fi
+
+# get all users
+echo === get all users ===
+execute_curl_cmd ${users_url} GET ""
+echo =====================
+# get all todo lists
+echo === get all todo lists ===
+execute_curl_cmd ${todo_list_url} GET ""
+echo ==========================

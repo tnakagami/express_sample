@@ -5,7 +5,6 @@ const BaseRouter = require('./base_router');
 class Users extends BaseRouter {
     constructor(router, Model) {
         super(router, Model, 'User');
-        this.formatter = this.formatter.bind(this);
     }
     formatter(key, value) {
         // call parent class function
