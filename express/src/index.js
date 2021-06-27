@@ -15,6 +15,7 @@ const todo_list = require('./todo_list');
 app.use('/todo-list', todo_list);
 
 // start express server
-database.sequelize.sync().then(() => {
+const option = (process.env.DEBUG.toLowerCase() === 'true') ? {force: true} : {};
+database.sequelize.sync(option).then(() => {
     app.listen(port, () => logger.info(`Web Server listening on port ${port}!`));
 });

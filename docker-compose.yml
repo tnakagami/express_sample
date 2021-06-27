@@ -37,6 +37,7 @@ services:
         env_file:
             - ./db.env
         environment:
+            - DEBUG=true
             - TZ=+09:00
             - NODE_UID=1000
             - NODE_GID=1000
