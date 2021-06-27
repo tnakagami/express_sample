@@ -38,7 +38,7 @@ router.get('/:id', (req, res) => {
         }
 
         return result;
-    });
+    }).catch((err) => err);
 });
 router.get('/', (req, res) => {
     const route_type = 'FIND';
@@ -60,7 +60,7 @@ router.get('/', (req, res) => {
         }
 
         return result;
-    });
+    }).catch((err) => err);
 });
 // define POST method
 router.post('/', (req, res) => {
@@ -82,10 +82,10 @@ router.post('/', (req, res) => {
         }
 
         return result;
-    });
+    }).catch((err) => err);
 });
 // define PUT method
-router.post('/:id', (req, res) => {
+router.put('/:id', (req, res) => {
     const route_type = 'PUT';
     const id = req.params.id;
     const data = req.body;
@@ -112,7 +112,7 @@ router.post('/:id', (req, res) => {
         }
 
         return result;
-    });
+    }).catch((err) => err);
 });
 // define DELETE method
 router.delete('/:id', (req, res) => {
@@ -134,6 +134,6 @@ router.delete('/:id', (req, res) => {
         }
 
         return result;
-    });
+    }).catch((err) => err);
 });
 module.exports = router;
