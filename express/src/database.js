@@ -6,7 +6,7 @@ const env = process.env;
 const sequelize  = new Sequelize(env.MYSQL_DATABASE, env.MYSQL_USER, env.MYSQL_PASSWORD, {
     host: 'database', // set service name in docker-compose.yml
     dialect: 'mysql',
-    logging: (process.env.DEBUG.toLowerCase() === 'true') ? logger.debug.bind(logger) : false,
+    logging: (msg) => logger.debug(msg),
     timezone: env.TZ,
 });
 // define models

@@ -116,12 +116,11 @@ function delete_all_data() {
     local _url="$1"
 
     echo === delete all data "(${_url})" ===
-    curl ${_url} -X GET -H "${content_type}" -s | grep -o -E '"id":([0-9]*),' | sed -E -e 's|"id":([0-9]*),|\1|' | while read target_id; do
+    curl ${_url} -X GET -H "${content_type}" -s | grep -oP '(?<="id":)\d+(?=,)' | while read target_id; do
         curl ${_url}/${target_id} -X DELETE -H "${content_type}" -D - -s
     done
     echo =======================
 }
-
 
 if [ ${delete_flag} -eq 1 ]; then
     delete_all_data ${user_profile_url}

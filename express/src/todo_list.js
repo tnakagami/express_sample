@@ -42,12 +42,13 @@ router.get('/:id', (req, res) => {
 });
 router.get('/', (req, res) => {
     const route_type = 'FIND';
+    const query = req.query;
 
     sequelize.transaction(async (transaction) => {
         let result;
 
         try {
-            const targets = await orm.find({order: [['id', 'ASC']]});
+            const targets = await orm.find({order: [['id', 'ASC']], where: query});
             for (const target of targets) {
                 logging('info', route_type, JSON.stringify(target.toJSON()));
             }
