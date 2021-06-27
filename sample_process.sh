@@ -2,7 +2,7 @@
 
 readonly content_type="Content-Type: application/json"
 readonly base_url="http://localhost:11500"
-readonly user_profile_url="${base_url}/user-profile"
+readonly users_url="${base_url}/users"
 readonly todo_list_url="${base_url}/todo-list"
 delete_flag=0
 
@@ -19,8 +19,8 @@ while [ -n "$1" ]; do
     esac
 done
 
-function add_user_profile() {
-    echo === add user profiles ===
+function add_users() {
+    echo === add users ===
     {
         # usenamae birthday
         echo alice 2000/1/1
@@ -28,20 +28,20 @@ function add_user_profile() {
         echo bob 2000/1/3
     } | while read username birthday; do
         data='{"username":"'${username}'","birthday": "'${birthday}'"}'
-        echo $(curl ${user_profile_url} -X POST -H "${content_type}" -d "${data}" -s)
+        echo $(curl ${users_url} -X POST -H "${content_type}" -d "${data}" -s)
     done
-    echo =========================
+    echo =================
 }
-function update_user_profile() {
-    echo === update user profiles ===
+function update_users() {
+    echo === update users ===
     {
         echo 2 2001/1/2
         echo 3 2002/1/3
     } | while read user_id birthday; do
         data='{"birthday": "'${birthday}'"}'
-        echo $(curl ${user_profile_url}/${user_id} -X PUT -H "${content_type}" -d "${data}" -s)
+        echo $(curl ${users_url}/${user_id} -X PUT -H "${content_type}" -d "${data}" -s)
     done
-    echo ============================
+    echo ====================
 }
 
 function add_todo() {
@@ -73,39 +73,39 @@ function update_todo() {
 # ====================
 # === main routine ===
 # ====================
-# get all user profiles
-echo === get all user profiles ===
-echo $(curl ${user_profile_url} -X GET -H "${content_type}" -s)
-echo =============================
+# get all users
+echo === get all users ===
+echo $(curl ${users_url} -X GET -H "${content_type}" -s)
+echo =====================
 # get all todo lists
 echo === get all todo lists ===
 echo $(curl ${todo_list_url} -X GET -H "${content_type}" -s)
 echo ==========================
 
 # add data
-add_user_profile
+add_users
 add_todo
 
-# get all user profiles
-echo === get all user profiles ===
-echo $(curl ${user_profile_url} -X GET -H "${content_type}" -s)
-echo =============================
-echo === get filtered user profiles ===
-echo $(curl "${user_profile_url}?username=alice" -X GET -H "${content_type}" -s)
-echo =============================
+# get all users
+echo === get all users ===
+echo $(curl ${users_url} -X GET -H "${content_type}" -s)
+echo =====================
+echo === get filtered users ===
+echo $(curl "${users_url}?username=alice" -X GET -H "${content_type}" -s)
+echo ==========================
 # get all todo lists
 echo === get all todo lists ===
 echo $(curl ${todo_list_url} -X GET -H "${content_type}" -s)
 echo ==========================
 
 # update data
-update_user_profile
+update_users
 update_todo
 
-# get all user profiles
-echo === get all user profiles ===
-echo $(curl ${user_profile_url} -X GET -H "${content_type}" -s)
-echo =============================
+# get all users
+echo === get all users ===
+echo $(curl ${users_url} -X GET -H "${content_type}" -s)
+echo =====================
 # get all todo lists
 echo === get all todo lists ===
 echo $(curl ${todo_list_url} -X GET -H "${content_type}" -s)
@@ -123,6 +123,6 @@ function delete_all_data() {
 }
 
 if [ ${delete_flag} -eq 1 ]; then
-    delete_all_data ${user_profile_url}
+    delete_all_data ${users_url}
     delete_all_data ${todo_list_url}
 fi
