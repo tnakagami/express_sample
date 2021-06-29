@@ -1,6 +1,7 @@
 const moment = require('moment');
 const logger = require('./logger');
 const sequelize = require('./database').sequelize;
+const {Op} = require('sequelize');
 
 // define CURD method
 class ORMapper {
@@ -47,13 +48,21 @@ class ORMapper {
             throw err;
         }
     }
-    async delete(id) {
+    async delete(data) {
         try {
-            const target = await this.get(id);
+            const is_number = (value) => ((typeof value === 'number') && isFinite(value));
             let result = undefined;
 
-            if (target !== null) {
-                result = await this.Model.destroy({where: {id: id}});
+            if (is_number(data)) {
+                const id = data;
+                const target = await this.get(id);
+
+                if (target !== null) {
+                    result = await this.Model.destroy({where: {id: id}});
+                }
+            }
+            else {
+                result = await this.Model.destroy({where: data});
             }
 
             return result;
@@ -61,6 +70,21 @@ class ORMapper {
         catch (err) {
             throw err;
         }
+    }
+}
+
+// define CustomError
+class CustomError extends Error {
+    constructor(message, statusCode) {
+        super(message);
+        this.statusCode = statusCode;
+    }
+}
+// define CustomResult
+class CustomResult {
+    constructor(message, statusCode) {
+        this.message = message;
+        this.statusCode = statusCode;
     }
 }
 
@@ -73,20 +97,16 @@ class BaseRouter {
         this.init(router);
     }
     init(router) {
-        // bind class method
-        this.logging = this.logging.bind(this);
+        // bind methods
         this.formatter = this.formatter.bind(this);
-        this.convert2json = this.convert2json.bind(this);
-        this.callback_get = this.callback_get.bind(this);
-        this.callback_find = this.callback_find.bind(this);
-        this.callback_post = this.callback_post.bind(this);
-        this.callback_put = this.callback_put.bind(this);
-        this.callback_delete = this.callback_delete.bind(this);
+        this.get_item = this.get_item.bind(this);
+        this.find_items = this.find_items.bind(this);
+        this.create_item = this.create_item.bind(this);
+        this.update_item = this.update_item.bind(this);
+        this.delete_item = this.delete_item.bind(this);
+        this.delete_items = this.delete_items.bind(this);
         // handle router
         this.handle_routers(router);
-    }
-    logging(method, route_type, msg) {
-        logger[method](`${route_type}(${this.name}) ${msg}`);
     }
     formatter(key, value) {
         let result = value;
@@ -97,11 +117,6 @@ class BaseRouter {
 
         return result;
     }
-    convert2json(data) {
-        const indent = '    ';
-
-        return JSON.stringify(data, this.formatter, indent);
-    }
     handle_routers(router) {
         router.use((req, res, next) => {
             const indent = '    ';
@@ -109,15 +124,35 @@ class BaseRouter {
             res.app.set('json spaces', indent);
             next();
         });
-        router.get('/:id', this.callback_get);
-        router.get('/', this.callback_find);
-        router.post('/', this.callback_post);
-        router.put('/:id', this.callback_put);
-        router.delete('/:id', this.callback_delete);
+        router.get('/:id', this.get_item);
+        router.get('/', this.find_items);
+        router.post('/', this.create_item);
+        router.put('/:id', this.update_item);
+        router.delete('/:id', this.delete_item);
+        router.delete('/', this.delete_items);
+        router.use((req, res) => {
+            const logging = (route_type, msg) => logger.info(`${route_type}(${this.name}) ${msg}`);
+            const route_type = res.locals.route_type;
+            const result = res.locals.result;
+
+            if (typeof result.message === 'string') {
+                logging(route_type, result.message);
+                res.sendStatus(result.statusCode);
+            }
+            else {
+                const indent = '    ';
+                logging(route_type, JSON.stringify(result.message, this.formatter, indent));
+                res.status(result.statusCode).json(result.message);
+            }
+        });
+        // error handler
+        router.use((err, req, res, next) => {
+            logger.error(`status code: ${err.statusCode}, message: ${err.message}`);
+            res.status(err.statusCode || 500).json({error: err.message});
+        });
     }
-    // define GET method
-    callback_get(req, res) {
-        const route_type = 'GET';
+    // define "get" method
+    get_item(req, res, next) {
         const id = req.params.id;
 
         sequelize.transaction(async (transaction) => {
@@ -127,25 +162,25 @@ class BaseRouter {
                 const target = await this.orm.get(id);
 
                 if (target !== null) {
-                    this.logging('info', route_type, this.convert2json(target.toJSON()));
-                    result = Promise.resolve(res.status(200).json(target.toJSON()));
+                    result = Promise.resolve(new CustomResult(target.toJSON(), 200));
                 }
                 else {
-                    this.logging('info', route_type, 'Not Found');
-                    result = Promise.resolve(res.sendStatus(404));
+                    result = Promise.resolve(new CustomResult('Not Found', 404));
                 }
             }
             catch (err) {
-                const msg = err.message;
-                this.logging('error', route_type, msg);
-                result = Promise.reject(res.status(500).json({'error': msg}));
+                result = Promise.reject(new CustomError(err.message, 500));
             }
 
             return result;
-        }).catch((err) => err);
+        }).then((result) => {
+            res.locals.route_type = 'Get Item';
+            res.locals.result = result;
+            next();
+        }).catch((err) => next(err));
     }
-    callback_find(req, res) {
-        const route_type = 'FIND';
+    // define "find" method
+    find_items(req, res, next) {
         const query = req.query;
 
         sequelize.transaction(async (transaction) => {
@@ -154,21 +189,21 @@ class BaseRouter {
             try {
                 const options = Object.assign({where: query}, this.find_option);
                 const targets = await this.orm.find(options);
-                this.logging('info', route_type, this.convert2json(targets));
-                result = Promise.resolve(res.status(200).json(targets));
+                result = Promise.resolve(new CustomResult(targets, 200));
             }
             catch (err) {
-                const msg = err.message;
-                this.logging('error', route_type, msg);
-                result = Promise.reject(res.status(500).json({'error': msg}));
+                result = Promise.reject(new CustomError(err.message, 500));
             }
 
             return result;
-        }).catch((err) => err);
+        }).then((result) => {
+            res.locals.route_type = 'Find Items';
+            res.locals.result = result;
+            next();
+        }).catch((err) => next(err));
     }
-    // define POST method
-    callback_post(req, res) {
-        const route_type = 'POST';
+    // define "create" method
+    create_item(req, res, next) {
         const data = req.body;
 
         sequelize.transaction(async (transaction) => {
@@ -176,21 +211,21 @@ class BaseRouter {
 
             try {
                 const target = await this.orm.create(data);
-                this.logging('info', route_type, this.convert2json(target.toJSON()));
-                result = Promise.resolve(res.status(201).json(target.toJSON()));
+                result = Promise.resolve(new CustomResult(target.toJSON(), 201));
             }
             catch (err) {
-                const msg = err.message;
-                this.logging('error', route_type, msg);
-                result = Promise.reject(res.status(500).json({'error': msg}));
+                result = Promise.reject(new CustomError(err.message, 500));
             }
 
             return result;
-        }).catch((err) => err);
+        }).then((result) => {
+            res.locals.route_type = 'Create Item';
+            res.locals.result = result;
+            next();
+        }).catch((err) => next(err));
     }
-    // define PUT method
-    callback_put(req, res) {
-        const route_type = 'PUT';
+    // define "update" method
+    update_item(req, res, next) {
         const id = req.params.id;
         const data = req.body;
 
@@ -201,44 +236,65 @@ class BaseRouter {
                 const target = await this.orm.update(id, data, {where: {id: id}});
 
                 if (target !== undefined) {
-                    this.logging('info', route_type, this.convert2json(target.toJSON()));
-                    result = Promise.resolve(res.status(201).json(target.toJSON()));
+                    result = Promise.resolve(new CustomResult(target.toJSON(), 201));
                 }
                 else {
-                    this.logging('info', route_type, 'Not Found');
-                    result = Promise.resolve(res.sendStatus(400));
+                    result = Promise.resolve(new CustomResult('Not Found', 400));
                 }
             }
             catch (err) {
-                const msg = err.message;
-                this.logging('error', route_type, msg);
-                result = Promise.reject(res.status(500).json({'error': msg}));
+                result = Promise.reject(new CustomError(err.message, 500));
             }
 
             return result;
-        }).catch((err) => err);
+        }).then((result) => {
+            res.locals.route_type = 'Update Item';
+            res.locals.result = result;
+            next();
+        }).catch((err) => next(err));
     }
-    // define DELETE method
-    callback_delete(req, res) {
-        const route_type = 'DELETE';
+    // define "delete" method
+    delete_item(req, res, next) {
         const id = req.params.id;
 
         sequelize.transaction(async (transaction) => {
             let result;
 
             try {
-                await this.orm.delete(id);
-                this.logging('info', route_type, 'No Content');
-                result = Promise.resolve(res.sendStatus(204));
+                await this.orm.delete(parseInt(id));
+                result = Promise.resolve(new CustomResult('No Content', 204));
             }
             catch (err) {
-                const msg = err.message;
-                this.logging('error', route_type, msg);
-                result = Promise.reject(res.status(500).json({'error': msg}));
+                result = Promise.reject(new CustomError(err.message, 500));
             }
 
             return result;
-        }).catch((err) => err);
+        }).then((result) => {
+            res.locals.route_type = 'Delete Item';
+            res.locals.result = result;
+            next();
+        }).catch((err) => next(err));
+    }
+    delete_items(req, res, next) {
+        const query = Object.fromEntries(Object.entries(req.query).map(([key, value]) => [key, {[Op.like]: `%${value}%`}]));
+
+        sequelize.transaction(async (transaction) => {
+            let result;
+
+            try {
+                await this.orm.delete(query);
+                result = Promise.resolve(new CustomResult('No Content', 204));
+            }
+            catch (err) {
+                result = Promise.reject(new CustomError(err.message, 500));
+            }
+
+            return result;
+        }).then((result) => {
+            res.locals.route_type = 'Delete Items';
+            res.locals.result = result;
+            next();
+        }).catch((err) => next(err));
     }
 }
 
