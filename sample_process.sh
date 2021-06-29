@@ -133,10 +133,14 @@ function delete_all_data() {
     done
     echo =======================
 }
+function delete_all_data_using_query() {
+    local _url="$1"
+    curl "${_url}?title=_" -X DELETE -H "${content_type}" -D -
+}
 
 if [ ${delete_flag} -eq 1 ]; then
     delete_all_data ${users_url}
-    delete_all_data ${todo_list_url}
+    delete_all_data_using_query ${todo_list_url}
 fi
 
 # get all users
