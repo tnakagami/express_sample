@@ -7,7 +7,6 @@ const {Op} = require('sequelize');
 class ORMapper {
     constructor(Model) {
         this.Model = Model;
-        this.is_number = (value) => ((typeof value === 'number') && isFinite(value));
     }
     async find(options) {
         try {
@@ -51,9 +50,10 @@ class ORMapper {
     }
     async delete(data) {
         try {
+            const is_number = (value) => ((typeof value === 'number') && isFinite(value));
             let result = undefined;
 
-            if (this.is_number(data)) {
+            if (is_number(data)) {
                 const id = data;
                 const target = await this.get(id);
 
@@ -80,6 +80,7 @@ class CustomError extends Error {
         this.statusCode = statusCode;
     }
 }
+// define CustomResult
 class CustomResult {
     constructor(message, statusCode) {
         this.message = message;
@@ -97,9 +98,7 @@ class BaseRouter {
     }
     init(router) {
         // bind methods
-        this.logging = this.logging.bind(this);
         this.formatter = this.formatter.bind(this);
-        this.convert2json = this.convert2json.bind(this);
         this.get_item = this.get_item.bind(this);
         this.find_items = this.find_items.bind(this);
         this.create_item = this.create_item.bind(this);
@@ -109,9 +108,6 @@ class BaseRouter {
         // handle router
         this.handle_routers(router);
     }
-    logging(route_type, msg) {
-        logger.info(`${route_type}(${this.name}) ${msg}`);
-    }
     formatter(key, value) {
         let result = value;
 
@@ -120,11 +116,6 @@ class BaseRouter {
         }
 
         return result;
-    }
-    convert2json(data) {
-        const indent = '    ';
-
-        return JSON.stringify(data, this.formatter, indent);
     }
     handle_routers(router) {
         router.use((req, res, next) => {
@@ -140,23 +131,24 @@ class BaseRouter {
         router.delete('/:id', this.delete_item);
         router.delete('/', this.delete_items);
         router.use((req, res) => {
+            const logging = (route_type, msg) => logger.info(`${route_type}(${this.name}) ${msg}`);
             const route_type = res.locals.route_type;
             const result = res.locals.result;
 
             if (typeof result.message === 'string') {
-                this.logging(route_type, result.message);
+                logging(route_type, result.message);
                 res.sendStatus(result.statusCode);
             }
             else {
-                this.logging(route_type, this.convert2json(result.message));
+                const indent = '    ';
+                logging(route_type, JSON.stringify(result.message, this.formatter, indent));
                 res.status(result.statusCode).json(result.message);
             }
         });
         // error handler
         router.use((err, req, res, next) => {
             logger.error(`status code: ${err.statusCode}, message: ${err.message}`);
-            res.status(err.statusCode || 500);
-            res.json({error: err.message});
+            res.status(err.statusCode || 500).json({error: err.message});
         });
     }
     // define "get" method
