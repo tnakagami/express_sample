@@ -94,10 +94,12 @@ class BaseRouter {
         this.name = name || 'BaseRouter';
         this.find_option = {order: [['id', 'ASC']]};
         this.orm = new ORMapper(Model);
-        this.init(router);
-    }
-    init(router) {
         // bind methods
+        this.bind_methods();
+        // handle router
+        this.handle_routers(router)
+    }
+    bind_methods() {
         this.formatter = this.formatter.bind(this);
         this.get_item = this.get_item.bind(this);
         this.get_items = this.get_items.bind(this);
@@ -105,8 +107,6 @@ class BaseRouter {
         this.update_item = this.update_item.bind(this);
         this.delete_item = this.delete_item.bind(this);
         this.delete_items = this.delete_items.bind(this);
-        // handle router
-        this.handle_routers(router);
     }
     formatter(key, value) {
         let result = value;
