@@ -25,10 +25,12 @@ function execute_curl_cmd() {
     local _data="$3"
 
     if [ -z "${_data}" ]; then
-        echo $(curl ${_url} -X ${_method} -H "${content_type}" -s)
+        cmd="curl ${_url} -X ${_method} -H '${content_type}' -s"
     else
-        echo $(curl ${_url} -X ${_method} -H "${content_type}" -d "${_data}" -s)
+        cmd="curl ${_url} -X ${_method} -H '${content_type}' -d '${_data}' -s"
     fi
+    echo ${cmd}
+    echo $(eval ${cmd})
 }
 
 function add_users() {
@@ -129,13 +131,20 @@ function delete_all_data() {
 
     echo === delete all data "(${_url})" ===
     curl ${_url} -X GET -H "${content_type}" -s | grep -oP '(?<="id":\s)\d+(?=,)' | while read target_id; do
-        curl ${_url}/${target_id} -X DELETE -H "${content_type}" -D -
+        cmd="curl ${_url}/${target_id} -X DELETE -H '${content_type}' -D -"
+        echo ${cmd}
+        eval ${cmd}
     done
     echo =======================
 }
 function delete_all_data_using_query() {
     local _url="$1"
-    curl "${_url}?title=_" -X DELETE -H "${content_type}" -D -
+
+    echo === delete all data "(${_url})" ===
+    cmd="curl '${_url}?title=_' -X DELETE -H '${content_type}' -D -"
+    echo ${cmd}
+    eval ${cmd}
+    echo =======================
 }
 
 if [ ${delete_flag} -eq 1 ]; then
