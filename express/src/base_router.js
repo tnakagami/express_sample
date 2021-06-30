@@ -10,7 +10,7 @@ class ORMapper {
     }
     async find(options) {
         try {
-            return this.Model.findAll(options);
+            return await this.Model.findAll(options);
         }
         catch (err) {
             throw err;
@@ -100,7 +100,7 @@ class BaseRouter {
         // bind methods
         this.formatter = this.formatter.bind(this);
         this.get_item = this.get_item.bind(this);
-        this.find_items = this.find_items.bind(this);
+        this.get_items = this.get_items.bind(this);
         this.create_item = this.create_item.bind(this);
         this.update_item = this.update_item.bind(this);
         this.delete_item = this.delete_item.bind(this);
@@ -125,7 +125,7 @@ class BaseRouter {
             next();
         });
         router.get('/:id', this.get_item);
-        router.get('/', this.find_items);
+        router.get('/', this.get_items);
         router.post('/', this.create_item);
         router.put('/:id', this.update_item);
         router.delete('/:id', this.delete_item);
@@ -179,8 +179,7 @@ class BaseRouter {
             next();
         }).catch((err) => next(err));
     }
-    // define "find" method
-    find_items(req, res, next) {
+    get_items(req, res, next) {
         const query = req.query;
 
         sequelize.transaction(async (transaction) => {
@@ -197,7 +196,7 @@ class BaseRouter {
 
             return result;
         }).then((result) => {
-            res.locals.route_type = 'Find Items';
+            res.locals.route_type = 'Get Items';
             res.locals.result = result;
             next();
         }).catch((err) => next(err));
