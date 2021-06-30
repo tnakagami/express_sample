@@ -92,21 +92,21 @@ class CustomResult {
 class BaseRouter {
     constructor(router, Model, name) {
         this.name = name || 'BaseRouter';
-        this.find_option = {order: [['id', 'ASC']]};
+        this.findOption = {order: [['id', 'ASC']]};
         this.orm = new ORMapper(Model);
         // bind methods
-        this.bind_methods();
+        this.bindMethods();
         // handle router
-        this.handle_routers(router)
+        this.handleRouters(router)
     }
-    bind_methods() {
+    bindMethods() {
         this.formatter = this.formatter.bind(this);
-        this.get_item = this.get_item.bind(this);
-        this.get_items = this.get_items.bind(this);
-        this.create_item = this.create_item.bind(this);
-        this.update_item = this.update_item.bind(this);
-        this.delete_item = this.delete_item.bind(this);
-        this.delete_items = this.delete_items.bind(this);
+        this.getItem = this.getItem.bind(this);
+        this.getItems = this.getItems.bind(this);
+        this.createItem = this.createItem.bind(this);
+        this.updateItem = this.updateItem.bind(this);
+        this.deleteItem = this.deleteItem.bind(this);
+        this.deleteItems = this.deleteItems.bind(this);
     }
     formatter(key, value) {
         let result = value;
@@ -117,31 +117,31 @@ class BaseRouter {
 
         return result;
     }
-    handle_routers(router) {
+    handleRouters(router) {
         router.use((req, res, next) => {
             const indent = '    ';
             res.app.set('json replacer', this.formatter);
             res.app.set('json spaces', indent);
             next();
         });
-        router.get('/:id', this.get_item);
-        router.get('/', this.get_items);
-        router.post('/', this.create_item);
-        router.put('/:id', this.update_item);
-        router.delete('/:id', this.delete_item);
-        router.delete('/', this.delete_items);
+        router.get('/:id', this.getItem);
+        router.get('/', this.getItems);
+        router.post('/', this.createItem);
+        router.put('/:id', this.updateItem);
+        router.delete('/:id', this.deleteItem);
+        router.delete('/', this.deleteItems);
         router.use((req, res) => {
-            const logging = (route_type, msg) => logger.info(`${route_type}(${this.name}) ${msg}`);
-            const route_type = res.locals.route_type;
+            const logging = (routeType, msg) => logger.info(`${routeType}(${this.name}) ${msg}`);
+            const routeType = res.locals.routeType;
             const result = res.locals.result;
 
             if (typeof result.message === 'string') {
-                logging(route_type, result.message);
+                logging(routeType, result.message);
                 res.sendStatus(result.statusCode);
             }
             else {
                 const indent = '    ';
-                logging(route_type, JSON.stringify(result.message, this.formatter, indent));
+                logging(routeType, JSON.stringify(result.message, this.formatter, indent));
                 res.status(result.statusCode).json(result.message);
             }
         });
@@ -152,7 +152,7 @@ class BaseRouter {
         });
     }
     // define "get" method
-    get_item(req, res, next) {
+    getItem(req, res, next) {
         const id = req.params.id;
 
         sequelize.transaction(async (transaction) => {
@@ -174,19 +174,19 @@ class BaseRouter {
 
             return result;
         }).then((result) => {
-            res.locals.route_type = 'Get Item';
+            res.locals.routeType = 'Get Item';
             res.locals.result = result;
             next();
         }).catch((err) => next(err));
     }
-    get_items(req, res, next) {
+    getItems(req, res, next) {
         const query = req.query;
 
         sequelize.transaction(async (transaction) => {
             let result;
 
             try {
-                const options = Object.assign({where: query}, this.find_option);
+                const options = Object.assign({where: query}, this.findOption);
                 const targets = await this.orm.find(options);
                 result = Promise.resolve(new CustomResult(targets, 200));
             }
@@ -196,13 +196,13 @@ class BaseRouter {
 
             return result;
         }).then((result) => {
-            res.locals.route_type = 'Get Items';
+            res.locals.routeType = 'Get Items';
             res.locals.result = result;
             next();
         }).catch((err) => next(err));
     }
     // define "create" method
-    create_item(req, res, next) {
+    createItem(req, res, next) {
         const data = req.body;
 
         sequelize.transaction(async (transaction) => {
@@ -218,13 +218,13 @@ class BaseRouter {
 
             return result;
         }).then((result) => {
-            res.locals.route_type = 'Create Item';
+            res.locals.routeType = 'Create Item';
             res.locals.result = result;
             next();
         }).catch((err) => next(err));
     }
     // define "update" method
-    update_item(req, res, next) {
+    updateItem(req, res, next) {
         const id = req.params.id;
         const data = req.body;
 
@@ -247,13 +247,13 @@ class BaseRouter {
 
             return result;
         }).then((result) => {
-            res.locals.route_type = 'Update Item';
+            res.locals.routeType = 'Update Item';
             res.locals.result = result;
             next();
         }).catch((err) => next(err));
     }
     // define "delete" method
-    delete_item(req, res, next) {
+    deleteItem(req, res, next) {
         const id = req.params.id;
 
         sequelize.transaction(async (transaction) => {
@@ -269,12 +269,12 @@ class BaseRouter {
 
             return result;
         }).then((result) => {
-            res.locals.route_type = 'Delete Item';
+            res.locals.routeType = 'Delete Item';
             res.locals.result = result;
             next();
         }).catch((err) => next(err));
     }
-    delete_items(req, res, next) {
+    deleteItems(req, res, next) {
         const query = Object.fromEntries(Object.entries(req.query).map(([key, value]) => [key, {[Op.like]: `%${value}%`}]));
 
         sequelize.transaction(async (transaction) => {
@@ -290,7 +290,7 @@ class BaseRouter {
 
             return result;
         }).then((result) => {
-            res.locals.route_type = 'Delete Items';
+            res.locals.routeType = 'Delete Items';
             res.locals.result = result;
             next();
         }).catch((err) => next(err));
