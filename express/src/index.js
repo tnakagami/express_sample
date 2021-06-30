@@ -11,16 +11,16 @@ class RestApiServer {
     configuration() {
         // setup Users
         const Users = require('./users');
-        const users_router = express.Router();
-        this.app.use('/users', users_router);
-        new Users(users_router, database.models.User);
+        const usersRouter = express.Router();
+        this.app.use('/users', usersRouter);
+        new Users(usersRouter, database.models.User);
         // setup ToDo List
         const ToDoLists = require('./todo_lists');
-        const todo_lists_router = express.Router();
-        this.app.use('/todo-lists', todo_lists_router);
-        new ToDoLists(todo_lists_router, database.models.ToDoList);
+        const todoListsRouter = express.Router();
+        this.app.use('/todo-lists', todoListsRouter);
+        new ToDoLists(todoListsRouter, database.models.ToDoList);
     }
-    run_forever() {
+    run() {
         const port = process.env.SERVER_PORT || 11500;
         const debug = process.env.DEBUG || 'true';
         const option = (debug.toLowerCase() === 'true') ? {force: true} : {};
@@ -32,4 +32,4 @@ class RestApiServer {
 }
 
 const server = new RestApiServer();
-server.run_forever();
+server.run();
