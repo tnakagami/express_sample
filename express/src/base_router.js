@@ -10,7 +10,7 @@ class ORMapper {
     }
     async find(options) {
         try {
-            return this.Model.findAll(options);
+            return await this.Model.findAll(options);
         }
         catch (err) {
             throw err;

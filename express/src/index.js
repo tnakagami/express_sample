@@ -22,7 +22,8 @@ class RestApiServer {
     }
     run_forever() {
         const port = process.env.SERVER_PORT || 11500;
-        const option = (process.env.DEBUG.toLowerCase() === 'true') ? {force: true} : {};
+        const debug = process.env.DEBUG || 'true';
+        const option = (debug.toLowerCase() === 'true') ? {force: true} : {};
         // start express server
         database.sequelize.sync(option).then(() => {
             this.app.listen(port, () => logger.info(`Web Server listening on port ${port}!`));
