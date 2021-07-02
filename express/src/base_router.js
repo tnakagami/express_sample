@@ -97,7 +97,7 @@ class BaseRouter {
         // bind methods
         this.bindMethods();
         // handle router
-        this.handleRouters(router)
+        this.handleRouters(router);
     }
     bindMethods() {
         this.formatter = this.formatter.bind(this);
@@ -118,6 +118,7 @@ class BaseRouter {
         return result;
     }
     handleRouters(router) {
+        // preprocess
         router.use((req, res, next) => {
             const indent = '    ';
             res.app.set('json replacer', this.formatter);
@@ -130,6 +131,7 @@ class BaseRouter {
         router.put('/:id', this.updateItem);
         router.delete('/:id', this.deleteItem);
         router.delete('/', this.deleteItems);
+        // postprocess
         router.use((req, res) => {
             const logging = (routeType, msg) => logger.info(`${routeType}(${this.name}) ${msg}`);
             const routeType = res.locals.routeType;
@@ -238,7 +240,7 @@ class BaseRouter {
                     result = Promise.resolve(new CustomResult(target.toJSON(), 201));
                 }
                 else {
-                    result = Promise.resolve(new CustomResult('Not Found', 400));
+                    result = Promise.resolve(new CustomResult('Not Found', 404));
                 }
             }
             catch (err) {
