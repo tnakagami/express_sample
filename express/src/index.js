@@ -1,6 +1,8 @@
 const express = require('express');
 const logger = require('./logger');
 const database = require('./database');
+const path = require('path');
+const ECT = require('ect');
 
 class RestApiServer {
     constructor() {
@@ -9,6 +11,15 @@ class RestApiServer {
         this.configuration();
     }
     configuration() {
+        // setup template
+        this.app.set('views', path.join(__dirname, 'views'));
+        this.app.engine('ect', ECT({ watch: true, root: __dirname + '/views', ext: '.ect' }).render);
+        this.app.set('view engine', 'ect');
+        // setup view
+        const Templates = require('./templates');
+        const templatesRouter = express.Router();
+        this.app.use('/', templatesRouter);
+        new Templates(templatesRouter, '/');
         // setup Users
         const Users = require('./users');
         const usersRouter = express.Router();

@@ -1,0 +1,123 @@
+<% extend 'layout' %>
+
+<div>
+    <h1>User Information</h1>
+    <div>
+        <a href="<%= @link %>">Back to top page</a>
+    </div>
+    <div>
+        <button type="button" id="collect-user-info">collect user info</button>
+    </div>
+    <div>
+        <form>
+            <div>
+                <label>username</label>
+                <input type="input" value="" placeholder="Enter the username" id="username">
+            </div>
+            <div>
+                <label>birthday</label>
+                <input type="date" id="birthday">
+            </div>
+            <div>
+                <button type="button" id="register-user-info">Register</button>
+            </div>
+        </form>
+    </div>
+    <div id="output">
+    </div>
+</div>
+
+<% block 'scripts' : %>
+<script src="request.js"></script>
+<script>
+    (function () {
+        const g_url = '/users';
+
+        const getUserInfo = async () => {
+            const result = await request(g_url, 'GET');
+            const output = document.getElementById('output');
+            let data = '';
+
+            if (result.length > 0) {
+                for (const val of result) {
+                    data += `
+                    <tr>
+                        <td>${val.username}</td>
+                        <td>${val.birthday}</td>
+                    </tr>
+                    `;
+                }
+            }
+            else {
+                data = `
+                <tr>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                `;
+            }
+
+            output.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>username</th>
+                        <th>birthday</th>
+                    </tr>
+                </thead>
+                <tbody>
+                ${data}
+                </tbody>
+            </table>
+            `;
+        };
+
+        const postUserInfo = async () => {
+            const username = document.getElementById('username');
+            const birthday = document.getElementById('birthday');
+            const data = {
+                username: username.value,
+                birthday: birthday.value,
+            };
+
+            const result = await request(g_url, 'POST', JSON.stringify(data));
+            const output = document.getElementById('output');
+            output.innerHTML = 'success';
+        };
+
+        const init = () => {
+            const formatDate = (date, format='yyyy-MM-dd') => {
+                format = format.replace(/yyyy/g, date.getFullYear());
+                format = format.replace(/MM/g, ('0' + (date.getMonth() + 1)).slice(-2));
+                format = format.replace(/dd/g, ('0' + date.getDate()).slice(-2));
+                format = format.replace(/HH/g, ('0' + date.getHours()).slice(-2));
+                format = format.replace(/mm/g, ('0' + date.getMinutes()).slice(-2));
+                format = format.replace(/ss/g, ('0' + date.getSeconds()).slice(-2));
+                format = format.replace(/SSS/g, ('00' + date.getMilliseconds()).slice(-3));
+
+                return format;
+            };
+            // set birthday
+            const birthday = document.getElementById('birthday');
+            birthday.value = formatDate(new Date());
+            // get user info
+            (async () => getUserInfo())().catch(err => console.log(err));
+
+            // get process
+            const collectUserInfo = document.getElementById('collect-user-info');
+            collectUserInfo.addEventListener('click', (event) => {
+                event.preventDefault();
+                (async () => getUserInfo())().catch(err => console.log(err));
+            });
+            // post process
+            const registerUserInfo = document.getElementById('register-user-info');
+            registerUserInfo.addEventListener('click', (event) => {
+                event.preventDefault();
+                (async () => postUserInfo())().catch(err => console.log(err));
+            });
+        };
+
+        init();
+    }());
+</script>
+<% end %>
