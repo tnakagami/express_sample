@@ -1,0 +1,67 @@
+<% extend 'layout' %>
+
+<div>
+    <h1>ToDo list</h1>
+    <div>
+        <a href="<%= @link %>">Back to top page</a>
+    </div>
+    <div>
+        <button type="button" id="collect-todo-list">collect ToDo list</button>
+    </div>
+    <div id="output">
+    </div>
+</div>
+
+<% block 'scripts' : %>
+<script src="request.js"></script>
+<script>
+    (function () {
+        const g_url = '/todo-lists';
+
+        const getToDoList = async () => {
+            const result = await request(g_url, 'GET');
+            const output = document.getElementById('output');
+            let data = '';
+
+            for (const val of result) {
+                data += `
+                <tr>
+                    <td>${val.title}</td>
+                    <td>${val.content}</td>
+                    <td>${val.limit}</td>
+                </tr>
+                `;
+            }
+
+            output.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>title</th>
+                        <th>content</th>
+                        <th>limit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                ${data}
+                </tbody>
+            </table>
+            `;
+        };
+
+        const init = () => {
+            // get user info
+            (async () => getToDoList())().catch(err => console.log(err));
+
+            // get process
+            const collectToDoList = document.getElementById('collect-todo-list');
+            collectToDoList.addEventListener('click', (event) => {
+                event.preventDefault();
+                (async () => getToDoList())().catch(err => console.log(err));
+            });
+        };
+
+        init();
+    }());
+</script>
+<% end %>

@@ -1,24 +1,23 @@
 <% extend 'layout' %>
 
-<% block 'styles' : %>
-<style>
-    .sample {
-        width: 100%;
-    }
-</style>
-<% end %>
-
 <div>
     <h1>Express Sample</h1>
-    <div><%= @sample %></div>
-    <div id="sample"></div>
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    <th>link</th>
+                    <th>description</th>
+                </tr>
+            </thead>
+                <% for info in @rows : %>
+                <tr>
+                    <td><a href="<%= info.link %>"><%= info.link %></a></td>
+                    <td><%= info.description %></td>
+                </tr>
+                <% end %>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 </div>
-
-<% block 'scripts' : %>
-<script>
-    (function () {
-        const element = document.getElementById('sample');
-        element.innerHTML = 'insert data by JavaScript';
-    }());
-</script>
-<% end %>

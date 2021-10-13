@@ -15,9 +15,11 @@ class RestApiServer {
         this.app.set('views', path.join(__dirname, 'views'));
         this.app.engine('ect', ECT({ watch: true, root: __dirname + '/views', ext: '.ect' }).render);
         this.app.set('view engine', 'ect');
-        this.app.get('/', (req, res) => {
-            res.render('index', {sample: 'hello world'});
-        });
+        // setup view
+        const Templates = require('./templates');
+        const templatesRouter = express.Router();
+        this.app.use('/', templatesRouter);
+        new Templates(templatesRouter, '/');
         // setup Users
         const Users = require('./users');
         const usersRouter = express.Router();
