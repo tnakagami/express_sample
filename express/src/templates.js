@@ -19,6 +19,7 @@ class Templates {
         router.get('/', (req, res) => {
             res.render('index', {rows: rows});
         });
+        // request.js
         router.get('/request.js', (req, res) => {
             fs.readFile(path.join(__dirname, 'request.js'), 'UTF-8', (err, data) => {
                 res.writeHead(200, {'Content-Type': 'text/plain'});
