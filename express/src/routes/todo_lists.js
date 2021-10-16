@@ -1,12 +1,11 @@
 const {defaultFormatter, ORMapper} = require('./utils.js');
-const {preprocess, restApi, postprocess} = require('./common.js');
+const CustomRouter = require('./common.js');
 const models = require('./database.js').models;
 const orm = new ORMapper(models.ToDoList);
-const formatter = defaultFormatter(['limit']);
+const customRouter = new CustomRouter('ToDoList', orm, defaultFormatter(['limit']));
 // create router based on common.js
-let router;
-router = preprocess(formatter);
-router = restApi(router, orm);
-router = postprocess(router, 'ToDoList', formatter);
+customRouter.preprocess();
+customRouter.restApi();
+customRouter.postprocess();
 
-module.exports = router;
+module.exports = customRouter.router;

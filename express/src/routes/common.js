@@ -3,201 +3,200 @@ const {logger, CustomError, CustomResult} = require('./utils.js');
 const {Op} = require('sequelize');
 const sequelize = require('./database.js').sequelize;
 
-const preprocess = (formatter) => {
-    const router = express.Router();
+class CustomRouter {
+    constructor(routerName, orm, formatter) {
+        this.router = express.Router();
+        this.routerName = routerName;
+        this.orm = orm;
+        // bind
+        this.preprocess = this.preprocess.bind(this);
+        this.restApi = this.restApi.bind(this);
+        this.postprocess = this.postprocess.bind(this);
+    }
+    preprocess() {
+        this.router.use((req, res, next) => {
+            const indent = '    ';
+            res.app.set('json replacer', this.formatter);
+            res.app.set('json spaces', indent);
+            next();
+        });
+    }
 
-    router.use((req, res, next) => {
-        const indent = '    ';
-        res.app.set('json replacer', formatter);
-        res.app.set('json spaces', indent);
-        next();
-    });
+    restApi() {
+        // define "GET" method
+        this.router.get('/:id', (req, res, next) => {
+            const id = req.params.id;
 
-    return router;
-};
+            sequelize.transaction(async (transaction) => {
+                let result;
 
-const restApi = (router, orm) => {
-    // define "GET" method
-    router.get('/:id', (req, res, next) => {
-        const id = req.params.id;
+                try {
+                    const target = await this.orm.get(id);
 
-        sequelize.transaction(async (transaction) => {
-            let result;
-
-            try {
-                const target = await orm.get(id);
-
-                if (target !== null) {
-                    result = Promise.resolve(new CustomResult(target.toJSON(), 200));
+                    if (target !== null) {
+                        result = Promise.resolve(new CustomResult(target.toJSON(), 200));
+                    }
+                    else {
+                        result = Promise.resolve(new CustomResult('Not Found', 404));
+                    }
                 }
-                else {
-                    result = Promise.resolve(new CustomResult('Not Found', 404));
+                catch (err) {
+                    result = Promise.reject(new CustomError(err.message, 500));
                 }
-            }
-            catch (err) {
-                result = Promise.reject(new CustomError(err.message, 500));
-            }
 
-            return result;
-        }).then((result) => {
-            res.locals.routeType = 'Get Item';
-            res.locals.result = result;
-            next();
-        }).catch((err) => next(err));
-    });
-    router.get('/', (req, res, next) => {
-        const query = req.query;
+                return result;
+            }).then((result) => {
+                res.locals.routeType = 'Get Item';
+                res.locals.result = result;
+                next();
+            }).catch((err) => next(err));
+        });
+        this.router.get('/', (req, res, next) => {
+            const query = req.query;
 
-        sequelize.transaction(async (transaction) => {
-            let result;
+            sequelize.transaction(async (transaction) => {
+                let result;
 
-            try {
-                const options = {order: [['id', 'ASC']], where: query};
-                const targets = await orm.find(options);
-                result = Promise.resolve(new CustomResult(targets, 200));
-            }
-            catch (err) {
-                result = Promise.reject(new CustomError(err.message, 500));
-            }
+                try {
+                    const options = {order: [['id', 'ASC']], where: query};
+                    const targets = await this.orm.find(options);
+                    result = Promise.resolve(new CustomResult(targets, 200));
+                }
+                catch (err) {
+                    result = Promise.reject(new CustomError(err.message, 500));
+                }
 
-            return result;
-        }).then((result) => {
-            res.locals.routeType = 'Get Items';
-            res.locals.result = result;
-            next();
-        }).catch((err) => next(err));
-    });
-    // define "POST" method
-    router.post('/', (req, res, next) => {
-        const data = req.body;
+                return result;
+            }).then((result) => {
+                res.locals.routeType = 'Get Items';
+                res.locals.result = result;
+                next();
+            }).catch((err) => next(err));
+        });
+        // define "POST" method
+        this.router.post('/', (req, res, next) => {
+            const data = req.body;
 
-        sequelize.transaction(async (transaction) => {
-            let result;
+            sequelize.transaction(async (transaction) => {
+                let result;
 
-            try {
-                const target = await orm.create(data);
-                result = Promise.resolve(new CustomResult(target.toJSON(), 201));
-            }
-            catch (err) {
-                result = Promise.reject(new CustomError(err.message, 500));
-            }
-
-            return result;
-        }).then((result) => {
-            res.locals.routeType = 'Create Item';
-            res.locals.result = result;
-            next();
-        }).catch((err) => next(err));
-    });
-    // define "PUT" method
-    router.put('/:id', (req, res, next) => {
-        const id = req.params.id;
-        const data = req.body;
-
-        sequelize.transaction(async (transaction) => {
-            let result;
-
-            try {
-                const target = await orm.update(id, data, {where: {id: id}});
-
-                if (target !== undefined) {
+                try {
+                    const target = await this.orm.create(data);
                     result = Promise.resolve(new CustomResult(target.toJSON(), 201));
                 }
+                catch (err) {
+                    result = Promise.reject(new CustomError(err.message, 500));
+                }
+
+                return result;
+            }).then((result) => {
+                res.locals.routeType = 'Create Item';
+                res.locals.result = result;
+                next();
+            }).catch((err) => next(err));
+        });
+        // define "PUT" method
+        this.router.put('/:id', (req, res, next) => {
+            const id = req.params.id;
+            const data = req.body;
+
+            sequelize.transaction(async (transaction) => {
+                let result;
+
+                try {
+                    const target = await this.orm.update(id, data, {where: {id: id}});
+
+                    if (target !== undefined) {
+                        result = Promise.resolve(new CustomResult(target.toJSON(), 201));
+                    }
+                    else {
+                        result = Promise.resolve(new CustomResult('Not Found', 404));
+                    }
+                }
+                catch (err) {
+                    result = Promise.reject(new CustomError(err.message, 500));
+                }
+
+                return result;
+            }).then((result) => {
+                res.locals.routeType = 'Update Item';
+                res.locals.result = result;
+                next();
+            }).catch((err) => next(err));
+        });
+        // define "DELETE" method
+        this.router.delete('/:id', (req, res, next) => {
+            const id = req.params.id;
+
+            sequelize.transaction(async (transaction) => {
+                let result;
+
+                try {
+                    await this.orm.delete(parseInt(id));
+                    result = Promise.resolve(new CustomResult('No Content', 204));
+                }
+                catch (err) {
+                    result = Promise.reject(new CustomError(err.message, 500));
+                }
+
+                return result;
+            }).then((result) => {
+                res.locals.routeType = 'Delete Item';
+                res.locals.result = result;
+                next();
+            }).catch((err) => next(err));
+        });
+        this.router.delete('/', (req, res, next) => {
+            const query = Object.fromEntries(Object.entries(req.query).map(([key, value]) => [key, {[Op.like]: `%${value}%`}]));
+
+            sequelize.transaction(async (transaction) => {
+                let result;
+
+                try {
+                    await this.orm.delete(query);
+                    result = Promise.resolve(new CustomResult('No Content', 204));
+                }
+                catch (err) {
+                    result = Promise.reject(new CustomError(err.message, 500));
+                }
+
+                return result;
+            }).then((result) => {
+                res.locals.routeType = 'Delete Items';
+                res.locals.result = result;
+                next();
+            }).catch((err) => next(err));
+        });
+    }
+
+    postprocess() {
+        this.router.use((req, res, next) => {
+            const logging = (routeType, msg) => logger.info(`${routeType}(${this.routerName}) ${msg}`);
+            const routeType = res.locals.routeType;
+            const result = res.locals.result;
+
+            try {
+                if (typeof result.message === 'string') {
+                    logging(routeType, result.message);
+                    res.sendStatus(result.statusCode);
+                }
                 else {
-                    result = Promise.resolve(new CustomResult('Not Found', 404));
+                    const indent = '    ';
+                    logging(routeType, JSON.stringify(result.message, this.formatter, indent));
+                    res.status(result.statusCode).json(result.message);
                 }
             }
             catch (err) {
-                result = Promise.reject(new CustomError(err.message, 500));
+                const result = new CustomError(err.stack, 500);
+                next(result);
             }
+        });
+        // error handler
+        this.router.use((err, req, res, next) => {
+            logger.error(`status code: ${err.statusCode}, message: ${err.message}`);
+            res.status(err.statusCode || 500).json({error: err.message});
+        });
+    }
+}
 
-            return result;
-        }).then((result) => {
-            res.locals.routeType = 'Update Item';
-            res.locals.result = result;
-            next();
-        }).catch((err) => next(err));
-    });
-    // define "DELETE" method
-    router.delete('/:id', (req, res, next) => {
-        const id = req.params.id;
-
-        sequelize.transaction(async (transaction) => {
-            let result;
-
-            try {
-                await orm.delete(parseInt(id));
-                result = Promise.resolve(new CustomResult('No Content', 204));
-            }
-            catch (err) {
-                result = Promise.reject(new CustomError(err.message, 500));
-            }
-
-            return result;
-        }).then((result) => {
-            res.locals.routeType = 'Delete Item';
-            res.locals.result = result;
-            next();
-        }).catch((err) => next(err));
-    });
-    router.delete('/', (req, res, next) => {
-        const query = Object.fromEntries(Object.entries(req.query).map(([key, value]) => [key, {[Op.like]: `%${value}%`}]));
-
-        sequelize.transaction(async (transaction) => {
-            let result;
-
-            try {
-                await orm.delete(query);
-                result = Promise.resolve(new CustomResult('No Content', 204));
-            }
-            catch (err) {
-                result = Promise.reject(new CustomError(err.message, 500));
-            }
-
-            return result;
-        }).then((result) => {
-            res.locals.routeType = 'Delete Items';
-            res.locals.result = result;
-            next();
-        }).catch((err) => next(err));
-    });
-
-    return router;
-};
-
-const postprocess = (router, routerName, formatter) => {
-    router.use((req, res, next) => {
-        const logging = (routeType, msg) => logger.info(`${routeType}(${routerName}) ${msg}`);
-        const routeType = res.locals.routeType;
-        const result = res.locals.result;
-
-        try {
-            if (typeof result.message === 'string') {
-                logging(routeType, result.message);
-                res.sendStatus(result.statusCode);
-            }
-            else {
-                const indent = '    ';
-                logging(routeType, JSON.stringify(result.message, formatter, indent));
-                res.status(result.statusCode).json(result.message);
-            }
-        }
-        catch (err) {
-            const result = new CustomError(err.stack, 500);
-            next(result);
-        }
-    });
-    // error handler
-    router.use((err, req, res, next) => {
-        logger.error(`status code: ${err.statusCode}, message: ${err.message}`);
-        res.status(err.statusCode || 500).json({error: err.message});
-    });
-
-    return router;
-};
-
-module.exports = {
-    preprocess: preprocess,
-    restApi: restApi,
-    postprocess, postprocess,
-};
+module.exports = CustomRouter;
