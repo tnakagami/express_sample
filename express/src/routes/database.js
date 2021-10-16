@@ -1,4 +1,4 @@
-const logger = require('./logger');
+const {logger} = require('./utils.js');
 const {Sequelize, DataTypes} = require('sequelize');
 const env = process.env;
 
