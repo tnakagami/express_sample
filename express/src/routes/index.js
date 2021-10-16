@@ -21,15 +21,6 @@ const indexWrapper = (prefix) => {
     router.get('/', (req, res) => {
         res.render('index', {rows: rows});
     });
-    // request.js
-    router.get('/request.js', (req, res) => {
-        const targetPath = path.resolve(__dirname, '../public/js/request.js');
-        fs.readFile(targetPath, 'UTF-8', (err, data) => {
-            res.writeHead(200, {'Content-Type': 'text/plain'});
-            res.write(data);
-            res.end();
-        });
-    });
     // users
     router.get('/user', (req, res) => {
         res.render('users', {link: prefix});

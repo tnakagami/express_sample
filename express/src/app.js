@@ -3,12 +3,13 @@ const {logger} = require('./routes/utils.js');
 const path = require('path');
 const ECT = require('ect');
 const app = express();
-const ect = ECT({watch: true, root: __dirname + '/views', ext: '.ect'});
+const ect = ECT({watch: true, root: path.resolve(__dirname, './views'), ext: '.ect'});
 
 // =============
 // configuration
 // =============
 app.use(express.json());
+app.use(express.static(path.resolve(__dirname, './public')));
 app.set('views', path.join(__dirname, 'views'));
 app.engine('ect', ect.render);
 app.set('view engine', 'ect');
