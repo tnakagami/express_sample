@@ -1,6 +1,5 @@
 const express = require('express');
-const logger = require('./logger');
-const database = require('./database');
+const {logger} = require('./routes/utils.js');
 const path = require('path');
 const ECT = require('ect');
 
@@ -12,31 +11,28 @@ class RestApiServer {
     }
     configuration() {
         // setup template
+        const ect = ECT({ watch: true, root: __dirname + '/views', ext: '.ect' });
         this.app.set('views', path.join(__dirname, 'views'));
-        this.app.engine('ect', ECT({ watch: true, root: __dirname + '/views', ext: '.ect' }).render);
+        this.app.engine('ect', ect.render);
         this.app.set('view engine', 'ect');
         // setup view
-        const Templates = require('./templates');
-        const templatesRouter = express.Router();
-        this.app.use('/', templatesRouter);
-        new Templates(templatesRouter, '/');
+        const indexWrapper = require('./routes/index.js');
+        const indexRouter = indexWrapper('/');
+        this.app.use('/', indexRouter);
         // setup Users
-        const Users = require('./users');
-        const usersRouter = express.Router();
+        const usersRouter = require('./routes/users.js');
         this.app.use('/users', usersRouter);
-        new Users(usersRouter, database.models.User);
         // setup ToDo List
-        const ToDoLists = require('./todo_lists');
-        const todoListsRouter = express.Router();
+        const todoListsRouter = require('./routes/todo_lists.js');
         this.app.use('/todo-lists', todoListsRouter);
-        new ToDoLists(todoListsRouter, database.models.ToDoList);
     }
     run() {
         const port = process.env.SERVER_PORT || 11500;
         const debug = process.env.DEBUG || 'true';
         const option = (debug.toLowerCase() === 'true') ? {force: true} : {};
+        const sequelize = require('./routes/database.js').sequelize;
         // start express server
-        database.sequelize.sync(option).then(() => {
+        sequelize.sync(option).then(() => {
             this.app.listen(port, () => logger.info(`Web Server listening on port ${port}!`));
         });
     }
