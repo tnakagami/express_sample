@@ -2,20 +2,20 @@ const express = require('express');
 const {logger} = require('./routes/utils.js');
 const path = require('path');
 const ECT = require('ect');
-const app = express();
 const ect = ECT({watch: true, root: path.resolve(__dirname, './views'), ext: '.ect'});
 
 // =============
 // configuration
 // =============
+const app = express();
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, './public')));
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.resolve(__dirname, './views'));
 app.engine('ect', ect.render);
 app.set('view engine', 'ect');
 // setup index
-const indexWrapper = require('./routes/index.js');
-app.use('/', indexWrapper('/'));
+const indexRouter = require('./routes/index.js');
+app.use('/', indexRouter);
 // setup Users
 const usersRouter = require('./routes/users.js');
 app.use('/users', usersRouter);
