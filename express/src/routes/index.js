@@ -1,36 +1,28 @@
 const express = require('express');
-const moment = require('moment');
-const {logger} = require('./utils.js');
-const fs = require('fs');
-const path = require('path');
+const router = express.Router();
 
-const indexWrapper = (prefix) => {
-    const rows = [
-        {
-            link: (prefix === '/') ? '/user' : `${prefix}/user`,
-            description: 'user information',
-        },
-        {
-            link: (prefix === '/') ? '/todo-list' : `${prefix}/todo-list`,
-            description: 'todo list',
-        }
-    ];
-    const router = express.Router();
+const rows = [
+    {
+        link: '/user',
+        description: 'user information',
+    },
+    {
+        link: '/todo-list',
+        description: 'todo list',
+    }
+];
 
-    // index
-    router.get('/', (req, res) => {
-        res.render('index', {rows: rows});
-    });
-    // users
-    router.get('/user', (req, res) => {
-        res.render('users', {link: prefix});
-    });
-    // todo list
-    router.get('/todo-list', (req, res) => {
-        res.render('todo-list', {link: prefix});
-    });
+// index
+router.get('/', (req, res) => {
+    res.render('index', {rows: rows});
+});
+// users
+router.get('/user', (req, res) => {
+    res.render('users');
+});
+// todo list
+router.get('/todo-list', (req, res) => {
+    res.render('todo-list');
+});
 
-    return router;
-};
-
-module.exports = indexWrapper;
+module.exports = router;
