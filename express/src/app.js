@@ -2,6 +2,7 @@ const express = require('express');
 const {logger} = require('./routes/utils.js');
 const path = require('path');
 const ECT = require('ect');
+const cookieParser = require('cookie-parser');
 const ect = ECT({watch: true, root: path.resolve(__dirname, './views'), ext: '.ect'});
 
 // =============
@@ -9,6 +10,7 @@ const ect = ECT({watch: true, root: path.resolve(__dirname, './views'), ext: '.e
 // =============
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.resolve(__dirname, './public')));
 app.set('views', path.resolve(__dirname, './views'));
 app.engine('ect', ect.render);
@@ -22,6 +24,9 @@ app.use('/users', usersRouter);
 // setup ToDo List
 const todoListsRouter = require('./routes/todo_lists.js');
 app.use('/todo-lists', todoListsRouter);
+// setup tokenizer
+const tokenizer = require('./routes/tokenizer.js');
+app.use('/tokenizer', tokenizer);
 
 // ====================
 // start express server

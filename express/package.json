@@ -13,6 +13,8 @@
     "author": "tnakagami",
     "license": "ISC",
     "dependencies": {
+      "axios": "^0.25.0",
+      "cookie-parser": "^1.4.6",
       "ect": "^0.5.9",
       "express": "^4.17.1",
       "log4js": "^6.3.0",

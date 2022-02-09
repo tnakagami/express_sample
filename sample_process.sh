@@ -4,6 +4,7 @@ readonly content_type="Content-Type: application/json"
 readonly base_url="http://localhost:11500"
 readonly users_url="${base_url}/users"
 readonly todo_list_url="${base_url}/todo-lists"
+readonly tokenizer_url="${base_url}/tokenizer"
 delete_flag=0
 
 # check arguments
@@ -167,3 +168,9 @@ echo =====================
 echo === get all todo lists ===
 execute_curl_cmd ${todo_list_url} GET ""
 echo ==========================
+
+
+echo === tokenizer ===
+curl -X GET -H "${content_type}" ${tokenizer_url}
+echo
+echo =================
