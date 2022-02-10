@@ -50,5 +50,21 @@ services:
             - database
         logging: *json-logging
 
+    http_server:
+        build:
+            context: ./http_server
+            dockerfile: Dockerfile
+        image: http.server
+        working_dir: /src
+        restart: always
+        container_name: http-server
+        environment:
+            - SERVER_PORT=12001
+        expose:
+            - 12001
+        volumes:
+            - ./http_server/src/:/src:ro
+        logging: *json-logging
+
 volumes:
     database:

@@ -10,6 +10,7 @@ const ect = ECT({watch: true, root: path.resolve(__dirname, './views'), ext: '.e
 // =============
 const app = express();
 app.use(express.json());
+express.urlencoded({extended: true});
 app.use(cookieParser());
 app.use(express.static(path.resolve(__dirname, './public')));
 app.set('views', path.resolve(__dirname, './views'));

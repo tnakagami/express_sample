@@ -171,6 +171,7 @@ echo ==========================
 
 
 echo === tokenizer ===
-curl -X GET -H "${content_type}" ${tokenizer_url}
+echo curl -X POST -H "${content_type}" -d '{"username":"test","password":"secret"}' ${tokenizer_url}
+curl -X POST -H "${content_type}" -d '{"username":"test","password":"secret"}' ${tokenizer_url}
 echo
 echo =================
